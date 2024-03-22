@@ -134,8 +134,45 @@ router.get("/getAllFilesFromParticularBucket", Auth.userAuthMiddleware, async (r
     }
 });
 
+//download a Files from a Bucket
+router.get('/downloadFile/:filename/:folderName', Auth.userAuthMiddleware, (req, res) => {
 
+    const { filename, folderName } = req.params;
+    const filePath = `bucketFolder/${folderName}/${filename}`;
 
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    const fileStream = fs.createReadStream(filePath);
 
+    fileStream.pipe(res);
+});
+
+// This will delete Files from a given Bucket/folder
+router.post("/deleteFileBucket", async (req, res) => {
+    const folderName = req.body.folderName;
+    const fileName = req.body.fileName;
+    if (!folderName) {
+        return res.json({ status: false, message: "Folder Name is Mandatory" });
+    }
+    if (!fileName) {
+        return res.json({ status: false, message: "File Name is Mandatory" });
+    }
+    const rootFolder = "bucketFolder";
+    const folderpath = `${rootFolder}/${folderName}/${fileName}`;
+    try {
+        fs.unlink(folderpath, (err) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            console.log('File deleted successfully');
+        });
+        return res.json({ status: true, success: "File deleted successfully" });
+    } catch (error) {
+        return res.json({ status: false, success: error });
+    }
+});
 
 module.exports = router;
