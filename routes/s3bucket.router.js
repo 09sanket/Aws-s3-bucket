@@ -1,5 +1,7 @@
 const fs = require('fs');
-const router = require('express').Router();
+const express = require('express'); // Import express module
+const router = express.Router(); // Create an instance of the router
+const path = require('path'); // Import path module
 const Auth = require('../middleware/auth.middleware');
 
 // Create a Bucket 
@@ -43,5 +45,39 @@ router.post("/createFolderBucket", Auth.userAuthMiddleware, async (req, res) => 
         return res.status(500).json({ status: false, message: "Internal server error" });
     }
 });
+
+
+// Define route to get Bucket List
+router.get("/getAllFolderBucket", Auth.userAuthMiddleware, async (req, res) => {
+    try {
+        //joining path of directory 
+        const directoryPath = path.join('bucketFolder');
+
+        // Check if the directory exists
+        if (!fs.existsSync(directoryPath)) {
+            return res.status(404).json({ status: false, message: "Directory not found" });
+        }
+
+        // Read the directory contents
+        const files = fs.readdirSync(directoryPath);
+
+        // Filter directories
+        const directories = files.filter(file => {
+            const filePath = path.join(directoryPath, file);
+            return fs.statSync(filePath).isDirectory();
+        });
+
+        console.log(directories);
+        return res.json({ status: true, success: directories });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: "Internal server error" });
+    }
+});
+
+
+// using multer
+
+
 
 module.exports = router;
