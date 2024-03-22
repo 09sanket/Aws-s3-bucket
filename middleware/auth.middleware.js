@@ -13,7 +13,7 @@ exports.userAuthMiddleware  = async (req , resp , next) => {
         if(!getUser){
             return resp.json({status:400 , message: "apikey dont exist"})
         }
-        req.userAuthMiddleware = getUser;
+        req.user = getUser;
         next();
 
     }catch (error){

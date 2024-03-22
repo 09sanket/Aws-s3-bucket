@@ -4,6 +4,11 @@ const router = express.Router(); // Create an instance of the router
 const path = require('path'); // Import path module
 const Auth = require('../middleware/auth.middleware');
 
+const upload = require('../middleware/multer.middleware');
+const uploadModel = require('../model/uploads.model');
+
+
+
 // Create a Bucket 
 router.post("/createFolderBucket", Auth.userAuthMiddleware, async (req, res) => {
     const folderName = req.body.folderName;
@@ -75,8 +80,19 @@ router.get("/getAllFolderBucket", Auth.userAuthMiddleware, async (req, res) => {
     }
 });
 
-
 // using multer
+// Upload Files to a Bucket and store the same to MongoDB
+router.post("/uploadFileInBucket", Auth.userAuthMiddleware, upload().single("myFile"), async (req, res) => {
+    if (req.file) {
+        console.log("req.file : " , req.file);
+        const fileFullPath = req.file.destination + req.file.filename;
+        const uploadedData = new uploadModel({userId:req.user._id , filename:req.file.filename, mimeType:req.file.mimetype, patrh:fileFullPath});
+        await uploadedData.save();
+        res.json({ status: true, success: "File Uploaded Successfully" });
+    } else {
+        res.status(400).json({ status: false, message: "No file uploaded" });
+    }
+});
 
 
 
