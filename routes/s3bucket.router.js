@@ -83,16 +83,36 @@ router.get("/getAllFolderBucket", Auth.userAuthMiddleware, async (req, res) => {
 // using multer
 // Upload Files to a Bucket and store the same to MongoDB
 router.post("/uploadFileInBucket", Auth.userAuthMiddleware, upload().single("myFile"), async (req, res) => {
-    if (req.file) {
-        console.log("req.file : " , req.file);
-        const fileFullPath = req.file.destination + req.file.filename;
-        const uploadedData = new uploadModel({userId:req.user._id , filename:req.file.filename, mimeType:req.file.mimetype, patrh:fileFullPath});
-        await uploadedData.save();
-        res.json({ status: true, success: "File Uploaded Successfully" });
-    } else {
-        res.status(400).json({ status: false, message: "No file uploaded" });
+    try {
+        if (req.file) {
+            // Calculate the URL based on your server configuration and the filename
+            const baseUrl = 'https://yourdomain.com/uploads/'; // Replace with your server's base URL
+            const fileUrl = baseUrl + req.file.filename;
+
+            // Ensure that req.user is properly populated by the authentication middleware
+            if (!req.user || !req.user._id) {
+                return res.status(401).json({ status: false, message: "Unauthorized" });
+            }
+
+            // Create a new instance of the uploadModel with user ID, file details, and URL
+            const uploadedData = new uploadModel({
+                userId: req.user._id, // Assuming user ID is stored in req.user._id
+                filename: req.file.filename,
+                mimeType: req.file.mimetype,
+                path: req.file.destination, // Store the path as before (if needed)
+                url: fileUrl // Store the URL
+            });
+            await uploadedData.save(); // Save the uploaded data to the database
+            res.json({ status: true, success: "File Uploaded Successfully", url: fileUrl }); // Return the URL in the response
+        } else {
+            res.status(400).json({ status: false, message: "No file uploaded" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: false, message: "Internal Server Error" });
     }
 });
+
 
 
 
