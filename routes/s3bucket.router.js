@@ -175,4 +175,25 @@ router.post("/deleteFileBucket", async (req, res) => {
     }
 });
 
+// Delete Folder/Bucket only if it Empty
+router.post("/deleteFolderBucket", async (req, res) => {
+    const folderName = req.body.folderName;
+    if (!folderName) {
+        return res.json({ status: false, message: "Folder Name is Mandatory" });
+    }
+    const rootFolder = "bucketFolder";
+    const folderpath = `${rootFolder}/${folderName}`;
+    try {
+        if (fs.existsSync(rootFolder)) {
+            if (fs.existsSync(folderpath)) {
+                fs.rmdirSync(folderpath);
+                return res.json({ status: true, success: "Directory Deleted" });
+            }
+        }
+        return res.json({ status: false, success: "Directory Not Found" });
+    } catch (error) {
+        return res.json({ status: true, success: "Directory can't be deleted because it Not Empty" });
+    }
+});
+
 module.exports = router;
